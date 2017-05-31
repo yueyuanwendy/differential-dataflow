@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["UnorderedBuilder","A builder for unordered values."],["UnorderedCursor","A cursor for walking through an unordered sequence of values."],["UnorderedLayer","A layer of unordered values."]]});
