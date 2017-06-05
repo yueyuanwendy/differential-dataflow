@@ -8,6 +8,7 @@ use timely::dataflow::*;
 use timely::dataflow::operators::*;
 
 use rand::{Rng, SeedableRng, StdRng};
+use std::io;
 
 use differential_dataflow::input::Input;
 use differential_dataflow::trace::Trace;
@@ -93,14 +94,35 @@ fn main() {
                 // only do the work of this worker.
                 if round % peers == index {
                     input.advance_to(round2);
-                    let a = rng1.gen_range(0, nodes);
-                    let b = rng1.gen_range(0, nodes);
-                    let c = rng2.gen_range(0, nodes);
-                    let d = rng2.gen_range(0, nodes);
+                    println!("plesae input add node-a:");
+                    let mut input1 = String::new();
+                    io::stdin()
+                        .read_line(&mut input1)
+                        .expect("Failed to read line");
+                    let a = input1.trim().parse::<u32>().unwrap();
+                    println!("plesae input add node-b:");
+                    let mut input2 = String::new();
+                    io::stdin()
+                        .read_line(&mut input2)
+                        .expect("Failed to read line");
+                    let b = input2.trim().parse::<u32>().unwrap();
                     input.insert((a, b));
+
+                    println!("plesae input remove node-c:");
+                    let mut input3 = String::new();
+                    io::stdin()
+                        .read_line(&mut input3)
+                        .expect("Failed to read line");
+                    let c = input3.trim().parse::<u32>().unwrap();
+                    println!("plesae input remove node-d:");
+                    let mut input4 = String::new();
+                    io::stdin()
+                        .read_line(&mut input4)
+                        .expect("Failed to read line");
+                    let d = input4.trim().parse::<u32>().unwrap();
                     input.remove((c, d));
-                    println!("a:{}, b:{}", a, b);
-                    println!("c:{}, d:{}", c, d);
+                    println!("add node: a:{}, b:{}", a, b);
+                    println!("remove node: c:{}, d:{}", c, d);
                 }
 
                 if round % 1 == 0 {

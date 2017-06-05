@@ -19,26 +19,31 @@ use differential_dataflow::operators::count::CountTotal;
 use differential_dataflow::operators::arrange::{ArrangeByKey, ArrangeBySelf};
 use differential_dataflow::lattice::Lattice;
 use differential_dataflow::trace::implementations::hash::HashValSpine as Spine;
-
 fn main() {
     let nodes: u32 = std::env::args().nth(1).unwrap().parse().unwrap();
     let edges: usize = std::env::args().nth(2).unwrap().parse().unwrap();
+    let batch: usize = std::env::args().nth(3).unwrap().parse().unwrap();
 
-    // create a a degree counting differential dataflow
-    let (mut input, probe) = worker.dataflow(|scope| {
+    // define a new computational scope, in which to run BFS
+    timely::execute_from_args(std::env::args().skip(4), move |worker| {
 
-        // create edge input, count a few ways.
-        let (input, edges) = scope.new_collection();
+        // create a a degree counting differential dataflow
+        let (mut input, probe) = worker.dataflow(|scope| {
 
-        //pull off source and count them
-        let degrs = edges.map(|(src, _dst)| src).count();
+            // create edge input, count a few ways.
+            let (input, edges) = scope.new_collection();
 
-        // pull of count, and count.
-        let distr = degrs.map(|(_src, cnt)| cnt as usize).count();
+            // pull of source and count them
+            let degrs = edges.map(|(src, _dst)| src).count();
 
-        // show us something about the collection, notice when done.
-        let probe = distr.inspect(|x| println!("observed: {:?}", x)).probe();
+            // pull of count, and count.
+            let distr = degrs.map(|(_src, cnt)| cnt as u32).count();
 
-        (input, probe)
-    });
+            // show us something about the collection, notice when done.
+            let probe = distr.inspect(|x| println!("observed: {:?}", x)).probe();
+
+            (input, probe)
+        });
+    })
+            .unwrap();
 }

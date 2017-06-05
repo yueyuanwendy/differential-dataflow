@@ -32,8 +32,6 @@ fn main() {
     // define a new timely dataflow computation. 
     timely::execute_from_args(std::env::args().skip(4), move |worker| {
 
-        let timer = ::std::time::Instant::now();
-
         let index = worker.index();
         let peers = worker.peers();
 
@@ -99,8 +97,6 @@ fn main() {
             .trace
         });
 
-        println!("{:?}:\tloading edges", timer.elapsed());
-
         if pre {
             worker.step();
             worker.step();
@@ -110,7 +106,7 @@ fn main() {
             worker.step();
         }
 
-        println!("{:?}\tedges loaded; building query dataflows", timer.elapsed());
+        let timer = ::std::time::Instant::now();
 
         let mut roots = worker.dataflow(|scope| {
 
@@ -145,16 +141,10 @@ fn main() {
                  .join_core(&edges, |_n, &q, &d| Some((d, q)))
                  .join_core(&edges, |_n, &q, &d| Some((d, q)))
                  .join_core(&edges, |_n, &q, &d| Some((d, q)))
-                 .map(|x| x.1)
-                 .consolidate()
-                 .inspect(|x| println!("{:?}", x))
                  .probe_with(&mut probe);
 
             input
         });
-
-        println!("{:?}\tquery dataflows built; querying", timer.elapsed());
-
 
         // the trace will not compact unless we release capabilities.
         // we drop rather than continually downgrade them as we run.
@@ -165,23 +155,19 @@ fn main() {
 
                 let mut time = roots.time().clone();
 
-                // roots.insert(round % nodes);
-                if index == 0 {
-                    query.insert(round % nodes);
-                }
+                roots.insert(round % nodes);
+                query.insert(round % nodes);
 
                 time.inner += batch;
 
-                roots.advance_to(time.inner); roots.flush();
-                query.advance_to(time.inner); query.flush();
+                roots.advance_to(time.inner);
+                query.advance_to(time.inner);
 
-                if index == 0 {
-                    query.remove(round % nodes);
-                }
+                query.remove(round % nodes);
 
                 worker.step_while(|| probe.less_than(&time));
 
-                println!("{:?}\tquery round complete", timer.elapsed());
+                println!("done after: {:?}", timer.elapsed());
             }
         }
     }).unwrap();
