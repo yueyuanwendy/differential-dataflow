@@ -49,11 +49,11 @@ fn main() {
                              .count();
 
             // pull of count, and count.
-            let distr = degrs.map(|(_src, cnt)| cnt as usize)
-                             .count();
+//            let distr = degrs.map(|(_src, cnt)| cnt as usize)
+//                             .count();
 
             // show us something about the collection, notice when done.
-            let probe = distr.inspect(|x| println!("observed: {:?}", x))
+            let probe = degrs.inspect(|x| println!("observed: {:?}", x))
                              .probe();
 
             (input, probe)
@@ -67,14 +67,14 @@ fn main() {
 
         // load up graph dataz
         for edge in 0..edges {
-            println!("peer:{}, index:{}", peers, index);
+            //            println!("peer:{}, index:{}", peers, index);
             if edge % peers == index {
                 let a = rng1.gen_range(0, nodes);
                 let b = rng1.gen_range(0, nodes);
                 input.insert((a, b));
-                println!("a:{}, b:{}", a, b);
+                //                println!("insert number: a:{}, b:{}", a, b);
             }
-            println!("Hi");
+            //            println!("Hi");
         }
 
         input.advance_to(1);
@@ -94,35 +94,35 @@ fn main() {
                 // only do the work of this worker.
                 if round % peers == index {
                     input.advance_to(round2);
-                    println!("plesae input add node-a:");
+                    println!("plesae input add number:");
                     let mut input1 = String::new();
                     io::stdin()
                         .read_line(&mut input1)
                         .expect("Failed to read line");
                     let a = input1.trim().parse::<u32>().unwrap();
-                    println!("plesae input add node-b:");
-                    let mut input2 = String::new();
-                    io::stdin()
-                        .read_line(&mut input2)
-                        .expect("Failed to read line");
-                    let b = input2.trim().parse::<u32>().unwrap();
-                    input.insert((a, b));
+                    //                    println!("plesae input add node-b:");
+                    //                    let mut input2 = String::new();
+                    //                    io::stdin()
+                    //                        .read_line(&mut input2)
+                    //                        .expect("Failed to read line");
+                    //                    let b = input2.trim().parse::<u32>().unwrap();
+                    input.insert((a, 0));
 
-                    println!("plesae input remove node-c:");
+                    println!("plesae input remove number:");
                     let mut input3 = String::new();
                     io::stdin()
                         .read_line(&mut input3)
                         .expect("Failed to read line");
                     let c = input3.trim().parse::<u32>().unwrap();
-                    println!("plesae input remove node-d:");
-                    let mut input4 = String::new();
-                    io::stdin()
-                        .read_line(&mut input4)
-                        .expect("Failed to read line");
-                    let d = input4.trim().parse::<u32>().unwrap();
-                    input.remove((c, d));
-                    println!("add node: a:{}, b:{}", a, b);
-                    println!("remove node: c:{}, d:{}", c, d);
+                    //                    println!("plesae input remove node-d:");
+                    //                    let mut input4 = String::new();
+                    //                    io::stdin()
+                    //                        .read_line(&mut input4)
+                    //                        .expect("Failed to read line");
+                    //                    let d = input4.trim().parse::<u32>().unwrap();
+                    input.remove((c, 0));
+                    //                    println!("add node: a:{}, b:{}", a, b);
+                    //                    println!("remove node: c:{}, d:{}", c, d);
                 }
 
                 if round % 1 == 0 {

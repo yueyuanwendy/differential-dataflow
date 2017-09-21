@@ -24,10 +24,10 @@ fn main() {
 
     let nodes: u32 = std::env::args().nth(1).unwrap().parse().unwrap();
     let edges: usize = std::env::args().nth(2).unwrap().parse().unwrap();
-    let batch: usize = std::env::args().nth(3).unwrap().parse().unwrap();
+    let round: usize = std::env::args().nth(3).unwrap().parse().unwrap();
 
-    let kc1 = std::env::args().find(|x| x == "kcore1").is_some();
-    let kc2 = std::env::args().find(|x| x == "kcore2").is_some();
+    //let kc1 = std::env::args().find(|x| x == "kcore1").is_some();
+    //let kc2 = std::env::args().find(|x| x == "kcore2").is_some();
 
     // define a new computational scope, in which to run BFS
     timely::execute_from_args(std::env::args().skip(4), move |worker| {
@@ -52,7 +52,7 @@ fn main() {
                              .count();
 
             // show us something about the collection, notice when done.
-            let probe = distr//.inspect(|x| println!("observed: {:?}", x))
+            let probe = distr.inspect(|x| println!("observed: {:?}", x))
                              .probe();
 
             (input, probe)
@@ -61,14 +61,19 @@ fn main() {
         let timer = ::std::time::Instant::now();
 
         let seed: &[_] = &[1, 2, 3, index];
-        let mut rng1: StdRng = SeedableRng::from_seed(seed);    // rng for edge additions
-        let mut rng2: StdRng = SeedableRng::from_seed(seed);    // rng for edge additions
+        let mut rng1: StdRng = SeedableRng::from_seed(seed); // rng for edge additions
+        let mut rng2: StdRng = SeedableRng::from_seed(seed); // rng for edge additions
 
         // load up graph dataz
         for edge in 0..edges {
+            println!("peer:{}, index:{}", peers, index);
             if edge % peers == index {
-                input.insert((rng1.gen_range(0, nodes), rng1.gen_range(0, nodes)))
+                let a = rng1.gen_range(0, nodes);
+                let b = rng1.gen_range(0, nodes);
+                input.insert((a, b));
+                println!("a:{}, b:{}", a, b);
             }
+            println!("Hi");
         }
 
         input.advance_to(1);
@@ -81,32 +86,42 @@ fn main() {
             println!("Loading finished after {:?}", timer.elapsed());
         }
 
-        if batch > 0 {
+        if round > 0 {
 
-            for round in 1 .. {
+            for round2 in 1..round {
 
                 // only do the work of this worker.
                 if round % peers == index {
-                    input.advance_to(round);
-                    input.insert((rng1.gen_range(0, nodes), rng1.gen_range(0, nodes)));
-                    input.remove((rng2.gen_range(0, nodes), rng2.gen_range(0, nodes)));
+                    input.advance_to(round2);
+                    let a = rng1.gen_range(0, nodes);
+                    let b = rng1.gen_range(0, nodes);
+                    let c = rng2.gen_range(0, nodes);
+                    let d = rng2.gen_range(0, nodes);
+                    input.insert((a, b));
+                    input.remove((c, d));
+                    println!("a:{}, b:{}", a, b);
+                    println!("c:{}, d:{}", c, d);
                 }
 
-                if round % batch == 0 {
+                if round % 1 == 0 {
                     // all workers indicate they have finished with `round`.
-                    input.advance_to(round + 1);
+                    input.advance_to(round2 + 1);
                     input.flush();
 
                     let timer = ::std::time::Instant::now();
                     worker.step_while(|| probe.less_than(input.time()));
-                    println!("worker {}, round {} finished after {:?}", index, round, timer.elapsed());
+                    println!("worker {}, round {} finished after {:?}",
+                             index,
+                             round2,
+                             timer.elapsed());
                 }
             }
         }
-    }).unwrap();
+    })
+            .unwrap();
 }
 
-// fn kcore1<G: Scope>(edges: &Collection<G, (u32, u32)>, k: isize) -> Collection<G, (u32, u32)> 
+// fn kcore1<G: Scope>(edges: &Collection<G, (u32, u32)>, k: isize) -> Collection<G, (u32, u32)>
 // where G::Timestamp: Lattice+Ord {
 
 //     edges.iterate(|inner| {
@@ -125,7 +140,7 @@ fn main() {
 //     })
 // }
 
-// fn kcore2<G: Scope>(edges: &Collection<G, (u32, u32)>, k: isize) -> Collection<G, (u32, u32)> 
+// fn kcore2<G: Scope>(edges: &Collection<G, (u32, u32)>, k: isize) -> Collection<G, (u32, u32)>
 // where G::Timestamp: Lattice+::std::hash::Hash+Ord {
 
 //     edges.iterate(move |inner| {
